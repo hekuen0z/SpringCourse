@@ -1,9 +1,11 @@
 package by.hekuenoz.dao;
 
 import by.hekuenoz.models.Person;
+import org.postgresql.Driver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,17 +15,41 @@ import java.util.List;
 @Component
 public class PersonDAO {
     private static int PEOPLE_COUNT;
-    private List<Person> people;
+    private static final String URL = "jdbc:postgresql://localhost:5432/people_db";
+    private static final String USERNAME = "postgresTest";
+    private static final String PASSWORD = "1234";
+
+    private static Connection connection;
 
     {
-        people = new ArrayList<>();
-        people.add(new Person(++PEOPLE_COUNT, "Tom", 14));
-        people.add(new Person(++PEOPLE_COUNT, "Bob", 40));
-        people.add(new Person(++PEOPLE_COUNT, "Lap", 34));
+        try{
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        }
     }
 
     public List<Person> index() {
-        return people;
+        List<Person> people = new ArrayList<>();
+
+        try{
+            Statement statement = connection.createStatement();
+            String SQL = "SELECT * FROM Person";
+            ResultSet resultSet = statement.executeQuery(SQL);
+
+            while (resultSet.next()){
+                Person person = new Person();
+
+                person.setId(resultSet.getInt("id"));
+                person.setName(resultSet.getString("name"));
+            }
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
     }
 
     public Person show(int id) {
